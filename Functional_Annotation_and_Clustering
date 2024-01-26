@@ -1,0 +1,67 @@
+#################################
+##### Functional annotation #####
+#################################
+
+###Merge all primary transcript files for species. 
+
+cat *_evg_primary.fa > CALA_merged_short.fa
+
+###Upload merged primary transcript file to https://www.plabipd.de/mercator_main.html for functional annotation by MapMan. 
+
+##############################
+##### VSearch Clustering #####
+##############################
+
+###Clustering is performed by VSearch to group transcripts by function.
+###When the clustering threshold is optimised, all sequences corresponding to a single function should be grouped (i.e., all DFR sequences grouped in cluster clus1000). 
+###Clustering should initially be performed at the highest reasonable threshold, and then subsequently relax until suitable cluster composition is observed. 
+###VSearch only accepts nucleotide sequences as input. 
+
+#90% clustering
+vsearch --cluster_fast CALA_merged_short.fa --threads 80 --clusters clus --consout consenses_0.90.fa --msaout cons_MSA_0.90.fa --id 0.90
+awk '{print FILENAME"\t"$1}' clus* | grep '>' | sed 's/>//g' > vsearch_clust_c0.90.txt
+rm -rf clus*
+
+#85% clustering
+vsearch --cluster_fast CALA_merged_short.fa --threads 80 --clusters clus --consout consenses_0.85.fa --msaout cons_MSA_0.85.fa --id 0.85
+awk '{print FILENAME"\t"$1}' clus* | grep '>' | sed 's/>//g' > vsearch_clust_c0.85.txt
+rm -rf clus*
+
+#80% clustering
+vsearch --cluster_fast CALA_merged_short.fa --threads 80 --clusters clus --consout consenses_0.80.fa --msaout cons_MSA_0.80.fa --id 0.80
+awk '{print FILENAME"\t"$1}' clus* | grep '>' | sed 's/>//g' > vsearch_clust_c0.80.txt
+rm -rf clus*
+
+#############################
+##### MMSeq2 Clustering #####
+#############################
+
+###Many alternative tools are available for clustering. MMSeq2 was tested as it accepts both nucleotide and amino acid sequences as input, but the resulting clustering was not suitable for my dataset. 
+###The simplest MMSeq2 clustering commands use 'easy-cluster' and accept .fa files. 
+###Input files are isolated primary transcripts (EviGene output). 
+
+$HOME/tools/mmseqs/bin/mmseqs easy-cluster INPUT.fa clusterRes tmp ##This resulted in rather strict clustering -- i.e., split functional annotations into multiple clusters. 
+
+$HOME/tools/mmseqs/bin/mmseqs easy-linclust INPUT.fa clusterRes tmp ##This resulted in too relaxed clustering -- i.e., clusters contained accessions with different functional annotations. 
+
+###Clustering with MMSeq2 using mmseq database input was also explored with different threshold levels, however, clustering was still too strict. 
+
+$HOME/tools/mmseqs/bin/mmseqs cluster INPUT INPUT_clu tmp --cov-mode 0 -c 0.8 ##Testing different thresholds of clustering. 
+$HOME/tools/mmseqs/bin/mmseqs createtsv INPUT INPUT INPUT_clu INPUT_clu.tsv ##Creating tsv file results.
+
+###Whilst CD-HIT clustering was not tested, the CD-HIT-like settings of MMSeq2 were explored. CD-HIT-like settings resulted in very large, relaxed clusters for both nucleotide and amino acid sequences and therefore were not suitable. 
+
+$HOME/tools/mmseqs/bin/mmseqs createdb --dbtype 1 INPUT.fa INPUT_db ##Creating mmseq2 database - type 1 for amino acids. 
+
+$HOME/tools/mmseqs/bin/mmseqs cluster INPUT_db INPUT_db_clu tmp --min-seq-id 0.75 --cluster-mode 2
+
+$HOME/tools/mmseqs/bin/mmseqs createtsv INPUT_db INPUT_db INPUT_db_clu INPUT_db_clu.tsv #Creating tsv file results. 
+
+###The BLAST-like settings of MMSeq2 were also explored. Slightly more stringent clustering was observed, but still too relaxed. 
+
+$HOME/tools/mmseqs/bin/mmseqs createdb --dbtype 1 INPUT.fa INPUT_db ##Creating mmseq2 database - type 2 for nucleotides. 
+
+$HOME/tools/mmseqs/bin/mmseqs cluster INPUT_db INPUT_db_clu tmp -s 1.000 --cluster-mode 1 
+
+$HOME/tools/mmseqs/bin/mmseqs createtsv INPUT_db INPUT_db INPUT_db_clu INPUT_db_clu.tsv #Creating tsv file results. 
+
