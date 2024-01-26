@@ -31,7 +31,7 @@ export AUGUSTUS_CONFIG_PATH="$HOME/tools/augustus_config" ##PATH in orchidserver
 for f in *.fa
 do variable=$(basename "$f" | sed 's/_trinity_short.fa//g' )
 echo $variable
-python2 $HOME/tools/busco-master/scripts/run_BUSCO.py -c 60 -i $variable"_trinity_short.fa" -l $HOME/tools/databases/BUSCO/embryophyta_odb10 -o $variable"_trinity_short" -m genome
+python2 $HOME/tools/busco-master/scripts/run_BUSCO.py -c 60 -i $variable"_trinity_short.fa" -l $HOME/tools/databases/BUSCO/embryophyta_odb10 -o $variable"_trinity_short" -m transcriptome
 done
 
 	C:93.8%[S:4.3%,D:89.5%],F:1.1%,M:5.1%,n:1375
