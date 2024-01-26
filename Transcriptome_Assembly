@@ -33,3 +33,15 @@ do
 echo $i
 $HOME/tools/trinityrnaseq-v2.14.0/util/TrinityStats.pl $i
 done 
+
+###Formatting Raw Trinity assemblies (fa format) by renaming header into a simple format (e.g. 4 letter genus, 4 letter species name, followed by Trinity GeneID)
+###Using Caladenia pectinata (CALApect) as an example. 
+
+head CALApect_merged_trim_trinity.Trinity.fasta
+
+cat CALApect_merged_trim_trinity.Trinity.fasta | sed 's/TRINITY_DN/CALApect_G/g' | sed 's/ /\t/g' | awk '{print $1}' | head
+cat CALApect_merged_trim_trinity.Trinity.fasta | sed 's/TRINITY_DN/CALApect_G/g' | sed 's/ /\t/g' | awk '{print $1}' > CALApect_trinity_short.fa
+
+
+
+
