@@ -1,0 +1,33 @@
+#######################
+##### Bowtie2 Run #####
+#######################
+
+###Read mapping is performed using bowtie2 software, which maps primary transcripts against the trimmed raw files (input files for Trinity). 
+###Merge all primary transcript files for the species with which you want to perform mapping. 
+
+cat *_evg_primary.fa > CALA_merged_short.fa
+
+###Build the bowtie2 index using the merged species' primary transcript file. 
+
+$HOME/tools/bowtie2-2.4.5/bowtie2-build --threads 80 CALA_merged_short.fa CALA_merged_short_index 
+
+###Bowtie2 can be run to allow for multi-mapping, or to allow for single mapping. 
+###From my preliminary tests, higher alignment rates are achieved when disabling multi-mapping. 
+
+for item in *R1.fastq.gz
+do
+variable=$(basename "$item" | sed 's/_trim_R1.fastq.gz//g')
+echo "BEGIN MAPPING SAMPLE: "$variable
+$HOME/tools/bowtie2-2.4.5/bowtie2 -x CALA_merged_short_index -1 $variable"_trim_R1.fastq.gz" -2 $variable"_trim_R2.fastq.gz" -p 70 --end-to-end --no-mixed --no-discordant | samtools view -bS - > $variable"_BestMapped.bam"
+echo "COMPLETED SAMPLE: "$variable
+done
+
+###If you do want to allow multi-mapping, the following loop can be used:
+
+for item in *R1.fastq.gz
+do
+variable=$(basename "$item" | sed 's/_trim_R1.fastq.gz//g')
+echo "BEGIN MAPPING SAMPLE: "$variable
+$HOME/tools/bowtie2-2.4.5/bowtie2 -x CALA_merged_short_index -1 $variable"_trim_R1.fastq.gz" -2 $variable"_trim_R2.fastq.gz" -a -p 70 --end-to-end --no-mixed --no-discordant | samtools view -bS - > $variable"_MultiMapped.bam"
+echo "COMPLETED SAMPLE: "$variable
+done
