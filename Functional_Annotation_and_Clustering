@@ -8,6 +8,44 @@ cat *_evg_primary.fa > CALA_merged_short.fa
 
 ###Upload merged primary transcript file to https://www.plabipd.de/mercator_main.html for functional annotation by MapMan. 
 
+#########################
+##### MYB Annotator #####
+#########################
+
+###MapMan is unable to extensively annotate all MYB TFs, and therefore myb_annotator.py was used. 
+###Need to activate MYB_annotator before it can be used. 
+
+conda activate mybannotator
+
+###Likewise, when you are done using MYB_annotator, deactivate. 
+
+conda deactivate
+
+###Need to run each species separately so that orthologs are not overly condensed/simplified - when run in a concatenated file containing all species' primary transcripts, some true MYBs were wrongly removed. Therefore, run in a loop.
+###Isolated primary transcripts (EviGene output) used as input. 
+
+for item in *_evg_primary.aa
+do
+variable=$(basename "$item")
+echo "BEGIN MYB ANNOTATION: "$variable
+
+python $HOME/tools/MYB_annotator-main/MYB_annotator.py --baits MYB_baits.fasta --info MYB_baits.txt --out "sppresults/"$variable --subject $variable --search hmm --mode fasttree --hmm MYB_baits.hmm --refmybs AthRefMYBs.txt --ath AthMYBs.fasta --cpu 75
+
+echo "COMPLETED SAMPLE: "$variable
+done
+
+###Now need to concatenate all '02a_clean_MYBs.pep.fasta' files. This file contains the true MYBs. 
+
+cat *.pep.fasta > caladenia_clean_MYBs.aa
+
+###Now rerun MYB_annotator.py with the CALA_clean_MYBs.aa file.
+
+python $HOME/tools/MYB_annotator-main/MYB_annotator.py --baits MYB_baits.fasta --info MYB_baits.txt --out allcaladenia/ --subject caladenia_clean_MYBs.aa --search hmm --mode fasttree --hmm MYB_baits.hmm --refmybs AthRefMYBs.txt --ath AthMYBs.fasta --cpu 75
+
+###Additionally, to create a phylogeny of MYBs in IQ-TREE:
+
+$HOME/tools/iqtree-2.1.3-Linux/bin/iqtree2 -s ath_fin_alignment_input.fasta.aln -m MFP+MERGE -B 1000 -nt AUTO
+
 ##############################
 ##### VSearch Clustering #####
 ##############################
