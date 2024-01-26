@@ -2,8 +2,17 @@
 ##### Isolating primary transcripts #####
 #########################################
 
-##Evigene trial - need to format raw trinity assemblies before proceeding 
-## convert redundant assembly to primary transcripts by best coding sequence 
-## min protein size (MINAA) 100
+###EviGene is used to convert redundant assembly to primary transcripts by best coding sequence.
+###Input is raw formatted Trinity assembly. 
 
 perl $HOME/tools/evigene4/scripts/prot/tr2aacds4.pl -reorient -MINAA=100 -NCPU 70 -MAXMEM 100000 -logfile -cdnaseq CALApect_trinity_short.fa
+
+###Format and then extract primary transcripts (i.e. ..t1) from Evigene results and exclude the rest. 
+###Input is .okay.mrna/cds/aa file from 'publicset' folder. Example below for CALApect. 
+
+cat CALApect_trinity_short.okay.mrna | sed 's/ type/@ /g' | sed 's/ /\t/g'| awk '{print $1}' | perl -0076 -ne 'chomp;($h,@S)=split/\n/;$s=join("",@S);print"$h\t$s\n"unless(!$h)' | grep 't1@'| awk '{print ">"$1"\n"$2}'| sed 's/@//g' > CALApect_short_evg_primary.fa 
+
+###Rename 'NonamEVm' files specific to genus and species (i.e., 'CALApect' for Caladenia pectinata). 
+
+cat CALApect_short_evg_primary.fa | sed 's/NonamEVm/CALApect/g' | sed 's/ /\t/g' | awk '{print $1}' > CALApect_evg_primary.fa
+
