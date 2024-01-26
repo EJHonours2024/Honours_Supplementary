@@ -1,6 +1,6 @@
-################################
-######Trimming reads trial######
-################################
+##################################
+###### Trimming reads trial ######
+##################################
 
 for i in *_R1.fastq.gz
 do
@@ -11,5 +11,25 @@ done
 
 ###Concatenating files in preparation for assembly - merge all R1s (read 1) together and merge all R2s (read 2) together. 
 
-cat *_trim_R1.fastq.gz > CALApect_merged_trim_R1.fq.gz
-cat *_trim_R2.fastq.gz > CALApect_merged_trim_R2.fq.gz
+cat *_trim_R1.fastq.gz > X_merged_trim_R1.fq.gz
+cat *_trim_R2.fastq.gz > X_merged_trim_R2.fq.gz
+
+##########################
+#### Trinity Assembly ####
+##########################
+
+export PATH="$HOME/tools/Jellyfish/bin/:$PATH"
+export PATH="$HOME/tools/salmon-1.9.0/bin/:$PATH"
+
+for i in *_R1.fq.gz
+do
+variable=$(basename "$i" | sed 's/_R1.fq.gz//g')
+echo "BEGIN Trinity assembly: "$variable
+$HOME/tools/trinityrnaseq-v2.14.0/Trinity --seqType fq --full_cleanup --max_memory 180G --CPU 60 --SS_lib_type FR --min_contig_length 300 --left $variable"_R1.fq.gz" --right $variable"_R2.fq.gz" --output $variable"_trinity"
+done
+
+for i in *_trinity.Trinity.fasta
+do
+echo $i
+$HOME/tools/trinityrnaseq-v2.14.0/util/TrinityStats.pl $i
+done 
