@@ -1,0 +1,9 @@
+#########################################
+##### Isolating primary transcripts #####
+#########################################
+
+##Evigene trial - need to format raw trinity assemblies before proceeding 
+## convert redundant assembly to primary transcripts by best coding sequence 
+## min protein size (MINAA) 100
+
+perl $HOME/tools/evigene4/scripts/prot/tr2aacds4.pl -reorient -MINAA=100 -NCPU 70 -MAXMEM 100000 -logfile -cdnaseq CALApect_trinity_short.fa
