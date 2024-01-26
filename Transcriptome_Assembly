@@ -1,0 +1,15 @@
+################################
+######Trimming reads trial######
+################################
+
+for i in *_R1.fastq.gz
+do
+variable=$(basename "$i" | sed 's/_R1.fastq.gz//g')
+echo "BEGIN TRIMMING: "$i
+$HOME/tools/fastp/fastp -w 16 -5 -3 -r -W 10 -M 20 -l 100 -i $variable"_R1.fastq.gz" -I $variable"_R2.fastq.gz" -h $variable".html" -o $variable"_trim_R1.fastq.gz" -O $variable"_trim_R2.fastq.gz"
+done
+
+###Concatenating files in preparation for assembly - merge all R1s (read 1) together and merge all R2s (read 2) together. 
+
+cat *_trim_R1.fastq.gz > CALApect_merged_trim_R1.fq.gz
+cat *_trim_R2.fastq.gz > CALApect_merged_trim_R2.fq.gz
