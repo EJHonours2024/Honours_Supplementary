@@ -6,66 +6,67 @@ R-4.3.1/bin/R #Run R
 
 setwd("/home/darren/Emma_Honours/ancestral_de/de_analysis/") #Set working directory (example shown). 
 
-mydata <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1) #Read in read count data. 
-head(mydata) #Check the structure of the data. 
+count <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1) #Read in read count data. 
+count2 <- mydata[,-c(1,2,3,4,5,6,7,14,15,16,25,26,36,37,48,49)] #Select only the columns of interest (i.e., only labellum samples). 
 
-matrix <- mydata[,-c(1,2,3,4,5,6,7,11,12,13,14,15,16,21,22,23,24,25,26,30,31,32,36,37,41,42,43,44,48,49,53,54,55)] #Select only the columns of interest, in this case, I have only selected labellum (LAB) samples for SD species and petal samples for FD species. 
-head(matrix) #Check the structure of the data. 
+cluster <- read.table("vsearch_clust_c0.75.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=2) 
+count2$cluster <- cluster[match(row.names(count2), row.names(cluster)),"cluster"] #Match Evigene accessions to VSEARCH cluster assignment. 
 
-cluster <- read.table("vsearch_clust_c0.75.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=2) #Set rownames to column2 as uniqueID before reading in data. This is the clustering file with the optimised threshold.  
-head(cluster)
+#Stop here and check that matching is correct and corresponds to original files. 
 
-matrix$cluster <- cluster[match(row.names(matrix), row.names(cluster)),"cluster"] #Match EviGene accession to VSEARCH cluster assignment. 
-write.table(matrix, file = "counts_match_cluster.txt",sep="\t") #Write this dataset as a new file. 
+write.table(count2, file = "counts_geneID_cluster.txt",sep="\t") #Write dataframe to a new file. 
 
-#Stop here and check that the matching worked properly - cross-check the original files and confirm that cluster assignment is consistent. 
+prep <- read.table("counts_geneID_cluster.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1)
 
-test <- aggregate(. ~ cluster, matrix, FUN=sum) #Aggregate single, best mapped read counts to cluster level. 
-row.names(test) <- test$cluster #Assign cluster column as 'rownames'. 
-matrix2 <- test[,-c(1)] #Remove cluster column (duplicated) and assign to new dataframe. 
+test <- aggregate(. ~ cluster, prep, FUN=sum) #Aggregate single, best mapped counts to cluster level. 
+row.names(test) <- test$cluster #Assign cluster column as rownames. 
+matrix2 <- test[,-c(1)] #Remove cluster column and assign to new dataframe. 
+write.table(matrix2, file = "aggregate_sum_cluster.txt", sep="\t", row.names=FALSE) #Write results to a new file. 
 
-group <- factor(c("SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","FD","FD","FD","SD","SD","SD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD")) #Assign grouping for each sample - in this example I have used 'SD' for sexually deceptive species samples and 'FD' for food deceptive species samples. 
+long <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1)
+clusterlong <- read.table("vsearch_clust_c0.75.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=2) 
+
+long$cluster <- clusterlong[match(row.names(long), row.names(clusterlong)),"cluster"] #Match Evigene to VSEARCH cluster assignment. 
+new <- select(long, c(5,63)) #Select only length and cluster columns and assign to a new dataframe. 
+
+clus_max <- aggregate(Length~cluster,new,function(x) x[which.max(abs(x))]) #Aggregate by longest cluster. 
+
+test$Length <- clus_max[match(test$cluster, clus_max$cluster),"Length"] #Combine the two dataframes. 
+write.table(test, file = "longest_cluster_length.txt", sep="\t", row.names=FALSE)
+
+#Check here to make sure that the longest cluster length is actually correct (compare to the longest length from read counts combined with cluster table).
+
+#FPKM normalisation
+counts_longest <- read.table("longest_cluster_length.txt", sep="\t", stringsAsFactors=FALSE, header=TRUE)
+rpkm_cluster <- rpkm(y, gene.length=counts_longest$Length)
+write.table(rpkm_cluster, file = "edgeR_FPKM_cluster_.txt", sep="\t")
+
+#DE using FPKM values
+matrix2 <- read.table("edgeR_FPKM_cluster_.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1)
+
+#Assign sample groupings - here I have used 'SD' for samples of sexually deceptive species, and 'FD' for samples of food deceptive species. 
+group <- factor(c("SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","FD","FD","FD","SD","SD","SD","SD","SD","SD","SD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD"))
 y <- DGEList(counts=matrix2, group=group)
 design <- model.matrix(~0+group, data=y$samples)
 
 y <- calcNormFactors(y) #TMM normalisation
 y <- estimateDisp(y,design)
 
-plotMDS(y) #For preliminary exploration of full and subsetted dataset. Always run this before proceeding to DE analysis to see if any samples need to be removed (i.e., obvious outliers). 
-pdf(plotMDS(y),file=test1_fd_sd.pdf)
-dev.off()
-
 fit <- glmQLFit(y, design)
 
-my.contrasts <- makeContrasts(FDVSSD = groupFD - groupSD, levels=design) #Specify comparison between groups. 
+my.contrasts <- makeContrasts(FDVSSD = groupFD - groupSD, levels=design) #Specify the constrast. 
 
-qlf_FDVSSD <- glmQLFTest(fit, contrast=my.contrasts[,"FDVSSD"]) #Running glmQLF test. 
+qlf_FDVSSD <- glmQLFTest(fit, contrast=my.contrasts[,"FDVSSD"])
 FDVSSD_sig <- topTags(qlf_FDVSSD, n = Inf, adjust.method = "BH")
-write.table(FDVSSD_sig, file = "edgeR_qlf_FDVSSD_sig.txt", sep="\t") #Write results to a new file. 
+write.table(FDVSSD_sig, file = "edgeR_qlf_FPKM.txt", sep="\t")
 
-anno <- read.table("fd_sd_mapman.results.txt", stringsAsFactors=FALSE, fill=TRUE, header=TRUE) #Read in MapMan annotation file. 
-clus1 <- read.table("vsearch_clust_c0.75.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=2) #Read in VSEARCH clustering file. 
+testclus <- read.table("test_mapman_collapse.txt", quote = "", sep="\t", stringsAsFactors=FALSE, header=TRUE, fill=TRUE)
+DE <- read.table("edgeR_qlf_FPKM.txt", sep="\t", stringsAsFactors=FALSE, header=TRUE)
 
-anno <- select(anno,c(2,3,4)) #Selecting only the 'name', 'identifier', and 'description' columns from the MapMan file. 
+#Stop here and check that the dataframes are the same size, otherwise merging will not proceed correctly. 
 
-anno$clus <- clus1[match(anno$IDENTIFIER, row.names(clus1)),"cluster"] #Matching the two dataframes so that functional annotations can be linked to cluster assignment. 
-anno$merge <- paste(anno$IDENTIFIER,"@",anno$NAME,"@",anno$DESCRIPTION)
-anno <- na.omit(select(anno,c(4,5)))
-write.table(anno, file = "cluster_mapman_anno.txt",sep="\t",row.names=FALSE) #Write results to a new file. 
-
-df <- read.table("cluster_mapman_anno.txt",sep="\t", header = TRUE, stringsAsFactors = FALSE)
-
-result_df <- df %>% group_by(clus) %>% summarise(merge = paste(merge, collapse = " ")) #Group by cluster and summarize merged annotations (collapsing table). 
-write.table(result_df, file = "mapman_collapse.txt",sep="\t",row.names=FALSE) #Write to a new file. 
-
-testclus <- read.table("mapman_collapse.txt", quote = "", sep="\t", stringsAsFactors=FALSE, header=TRUE, fill=TRUE)
-DE <- read.table("edgeR_qlf_FDVSSD_sig.txt", sep="\t", stringsAsFactors=FALSE, header=TRUE) 
-
-#Stop here and check the dimensions of both dataframes (above) - if they are not the same size, matching will not be performed correctly. 
-
-merge_df <- merge(testclus, DE, by = "cluster") #Merge dataframes to combine DE results with MapMan annotations. 
-write.table(merge_df, file = "DE_FDVSSD_LAB.txt",sep="\t") #Write to a new file. 
-
+merge_df <- merge(testclus, DE, by = "cluster")
+write.table(merge_df, file = "DE_using_FPKM.txt",sep="\t") #Check that merging is successful by comparing to original input files. 
 
 
 
