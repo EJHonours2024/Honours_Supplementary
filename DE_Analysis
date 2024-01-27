@@ -1,3 +1,20 @@
-################################################
-########## DE Analysis - FD vs. SD LAB #########
-################################################
+#######################
+##### DE Analysis #####
+#######################
+
+R-4.3.1/bin/R #Run R
+
+setwd("/home/darren/Emma_Honours/ancestral_de/de_analysis/") #Set working directory (example shown). 
+
+mydata <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1) #Read in read count data. 
+head(mydata) #Check the structure of the data. 
+
+matrix <- mydata[,-c(1,2,3,4,5,6,7,11,12,13,14,15,16,21,22,23,24,25,26,30,31,32,36,37,41,42,43,44,48,49,53,54,55)] #Select only the columns of interest, in this case, I have only selected labellum (LAB) samples for SD species and petal samples for FD species. 
+head(matrix) #Check the structure of the data. 
+
+cluster <- read.table("vsearch_clust_c0.75.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=2) #Set rownames to column2 as uniqueID before reading in data. This is the clustering file with the optimised threshold.  
+head(cluster)
+
+matrix$cluster <- cluster[match(row.names(matrix), row.names(cluster)),"cluster"] #Match EviGene accession to VSEARCH cluster assignment. 
+write.table(matrix, file = "counts_match_cluster.txt",sep="\t") #Write this dataset as a new file. 
+
