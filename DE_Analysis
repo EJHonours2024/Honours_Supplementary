@@ -18,3 +18,54 @@ head(cluster)
 matrix$cluster <- cluster[match(row.names(matrix), row.names(cluster)),"cluster"] #Match EviGene accession to VSEARCH cluster assignment. 
 write.table(matrix, file = "counts_match_cluster.txt",sep="\t") #Write this dataset as a new file. 
 
+#Stop here and check that the matching worked properly - cross-check the original files and confirm that cluster assignment is consistent. 
+
+test <- aggregate(. ~ cluster, matrix, FUN=sum) #Aggregate single, best mapped read counts to cluster level. 
+row.names(test) <- test$cluster #Assign cluster column as 'rownames'. 
+matrix2 <- test[,-c(1)] #Remove cluster column (duplicated) and assign to new dataframe. 
+
+group <- factor(c("SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","FD","FD","FD","SD","SD","SD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD")) #Assign grouping for each sample - in this example I have used 'SD' for sexually deceptive species samples and 'FD' for food deceptive species samples. 
+y <- DGEList(counts=matrix2, group=group)
+design <- model.matrix(~0+group, data=y$samples)
+
+y <- calcNormFactors(y) #TMM normalisation
+y <- estimateDisp(y,design)
+
+plotMDS(y) #For preliminary exploration of full and subsetted dataset. Always run this before proceeding to DE analysis to see if any samples need to be removed (i.e., obvious outliers). 
+pdf(plotMDS(y),file=test1_fd_sd.pdf)
+dev.off()
+
+fit <- glmQLFit(y, design)
+
+my.contrasts <- makeContrasts(FDVSSD = groupFD - groupSD, levels=design) #Specify comparison between groups. 
+
+qlf_FDVSSD <- glmQLFTest(fit, contrast=my.contrasts[,"FDVSSD"]) #Running glmQLF test. 
+FDVSSD_sig <- topTags(qlf_FDVSSD, n = Inf, adjust.method = "BH")
+write.table(FDVSSD_sig, file = "edgeR_qlf_FDVSSD_sig.txt", sep="\t") #Write results to a new file. 
+
+anno <- read.table("fd_sd_mapman.results.txt", stringsAsFactors=FALSE, fill=TRUE, header=TRUE) #Read in MapMan annotation file. 
+clus1 <- read.table("vsearch_clust_c0.75.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=2) #Read in VSEARCH clustering file. 
+
+anno <- select(anno,c(2,3,4)) #Selecting only the 'name', 'identifier', and 'description' columns from the MapMan file. 
+
+anno$clus <- clus1[match(anno$IDENTIFIER, row.names(clus1)),"cluster"] #Matching the two dataframes so that functional annotations can be linked to cluster assignment. 
+anno$merge <- paste(anno$IDENTIFIER,"@",anno$NAME,"@",anno$DESCRIPTION)
+anno <- na.omit(select(anno,c(4,5)))
+write.table(anno, file = "cluster_mapman_anno.txt",sep="\t",row.names=FALSE) #Write results to a new file. 
+
+df <- read.table("cluster_mapman_anno.txt",sep="\t", header = TRUE, stringsAsFactors = FALSE)
+
+result_df <- df %>% group_by(clus) %>% summarise(merge = paste(merge, collapse = " ")) #Group by cluster and summarize merged annotations (collapsing table). 
+write.table(result_df, file = "mapman_collapse.txt",sep="\t",row.names=FALSE) #Write to a new file. 
+
+testclus <- read.table("mapman_collapse.txt", quote = "", sep="\t", stringsAsFactors=FALSE, header=TRUE, fill=TRUE)
+DE <- read.table("edgeR_qlf_FDVSSD_sig.txt", sep="\t", stringsAsFactors=FALSE, header=TRUE) 
+
+#Stop here and check the dimensions of both dataframes (above) - if they are not the same size, matching will not be performed correctly. 
+
+merge_df <- merge(testclus, DE, by = "cluster") #Merge dataframes to combine DE results with MapMan annotations. 
+write.table(merge_df, file = "DE_FDVSSD_LAB.txt",sep="\t") #Write to a new file. 
+
+
+
+
