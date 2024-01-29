@@ -1,0 +1,9 @@
+###################################################
+##### MAFFT Multiple Sequence Alignment (MSA) #####
+###################################################
+
+mafft --localpair --maxiterate 1000 --thread 70 input.fa > output.fa
+
+# '--localpair' instructs local pairwise alignment to be performed. 
+# '--maxiterate' specifies the number of refinement cycles. 
+# Input can be nucleotide cds or amino acid protein sequence. 
