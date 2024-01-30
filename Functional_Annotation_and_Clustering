@@ -1,12 +1,23 @@
-#################################
-##### Functional annotation #####
-#################################
+##########################################
+##### Functional annotation (MapMan) #####
+##########################################
 
 ###Merge all primary transcript files for species. 
 
 cat *_evg_primary.fa > CALA_merged_short.fa
 
 ###Upload merged primary transcript file to https://www.plabipd.de/mercator_main.html for functional annotation by MapMan. 
+
+#################################################################
+##### Functional annotation (UniProtKB-SwissProt w/ DIAMON) #####
+#################################################################
+
+$HOME/tools/DIAMOND/diamond blastx -q CALA_merged_short.fa -d uniprot_sprot -o CALA_merged_short.vs.UniProt.blastx -e 0.01 -f 6 -p 20 -c 1 -b 12 --max-hsps 1 --max-target-seqs 1 --more-sensitive ###-c 1 and -b 24 allows memory usage to 500GB
+
+#Subsequent formatting of output. 
+
+awk '{print $1"\t"$2}' CALA_merged_short.vs.UniProt.blastx | sed 's/|/\t/g' | awk '{print $3"\t"$4"\t"$1}' > CALA_merged_short_evg_primary.vs.UniProt.dblastx
+awk -F"\t" 'NR==FNR{a[$2]=$1;next}{print $1"\t"$2"\t"$3"\t"a[$1];}' uniprot_sprot_anno_ref.txt CALA_merged_short_evg_primary.vs.UniProt.dblastx > CALA_merged_short.UniProt.annot.txt 
 
 #########################
 ##### MYB Annotator #####
