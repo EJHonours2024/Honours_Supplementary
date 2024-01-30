@@ -57,6 +57,51 @@ python $HOME/tools/MYB_annotator-main/MYB_annotator.py --baits MYB_baits.fasta -
 
 $HOME/tools/iqtree-2.1.3-Linux/bin/iqtree2 -s ath_fin_alignment_input.fasta.aln -m MFP+MERGE -B 1000 -nt AUTO
 
+##########################
+##### bHLH Annotator #####
+##########################
+
+###MapMan is unable to extensively annotate all bHLH TFs, and therefore bhlh_annotator.py was used. 
+###Need to activate bHLH_annotator before it can be used. 
+
+conda activate bhlh_annotator                                                                                                        
+
+###Likewise, when you are done using MYB_annotator, deactivate. 
+
+conda deactivate   
+
+###Need to run each species separately so that orthologs are not overly condensed/simplified - when run in a concatenated file containing all species' primary transcripts, some true MYBs were wrongly removed. Therefore, run in a loop.
+###Isolated primary transcripts (EviGene output) used as input. 
+
+for item in *_evg_primary.aa
+do
+variable=$(basename "$item")
+echo "BEGIN MYB ANNOTATION: "$variable
+
+python $HOME/tools/bHLH_annotator/bHLH_annotator.py --baits bHLH_baits.fasta --baitsinfo bHLH_baits.txt --info bHLH_annotator.csv --mode_aln mafft --out "sppresults/"$variable --subject $variable --search hmm --mode fasttree --hmm bHLH_baits_optimised.hmm --refmybs AthRefbHLHs.txt --ath bHLH_at.fasta --cpu 75
+
+echo "COMPLETED SAMPLE: "$variable
+done
+
+### Now need to concatenate all '02a_clean_MYBs.pep.fasta' files.
+
+cat *_clean.fasta > caladenia_clean_bHLHs.aa
+
+### Now rerun MYB_annotator.py with the caladenia_clean_bHLHs.aa file.
+
+python $HOME/tools/bHLH_annotator/bHLH_annotator.py --baits bHLH_baits.fasta --baitsinfo bHLH_baits.txt --info bHLH_annotator.csv --mode_aln mafft --out mergedspp --subject caladenia_clean_bHLHs.aa --search hmm --mode fasttree --hmm bHLH_baits_optimised.hmm --refmybs AthRefbHLHs.txt --ath bHLH_at.fasta --cpu 75
+
+### After visualising the resulting phylogeny from the merged spp bHLH_annotator run, it is clear that none of the species' bHLH042 accessions have been included. 
+### To manually add in accessions which have been left out:
+### Copy the accession from the input file and paste at the bottom of the ath_fin_alignment_input.fasta.aln file. 
+### Run the following mafft code and check that accession is now included at the bottom. 
+
+mafft-linsi --thread 70 bHLH_alignment.fa > bHLH_alignment_mafft.fa
+
+### To run iqtree2:
+
+$HOME/tools/iqtree-2.1.3-Linux/bin/iqtree2 -s bHLH_alignment_mafft.fa -m MFP+MERGE -B 1000 -nt AUTO
+
 ##############################
 ##### VSearch Clustering #####
 ##############################
