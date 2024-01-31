@@ -52,3 +52,11 @@ test$Length <- clus_max[match(test$Cluster, clus_max$Cluster),"Length"]
 write.table(test, file = "longest_cluster_length.txt", sep="\t", row.names=FALSE)
 
 ## Check here to make sure that the longest cluster length is actually correct (compare to the longest length from read counts combined with cluster table).
+
+## Manual calculation of FPKM values using the "longest_cluster_length.txt" file. 
+
+## FPKM = (exon mapped fragments * (10^9))/(total mapped fragments * exon length). 
+
+## Total mapped fragments is calculated from "read_counts.summary" file produced from featurecounts - sum of "Assigned" and "Unassigned Upmapped" values for each sample. 
+## Exon length information is located in the final column of hte "longest_cluster_length.txt" file. 
+## Using these values, manually calculate FPKM following the above formula in an application such as LibreOffice or Excel. 
