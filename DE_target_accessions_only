@@ -1,7 +1,9 @@
-## Use Samtools to convert Fasta to Fai
+## Following mapping w/ Bowtie2, use Samtools to convert Fasta to Fai
+
 samtools faidx targets.fa
-# Use libra excel to edit and then save as SAF
-# The length of the gene/transcript is stored on the second column of the unedited .fai file
+
+## Edit and save as SAF following the example dataframe structure below. 
+## Note - The length of the gene/transcript is stored on the second column of the unedited .fai file
 
 #E.G.,
 #GeneID,Chr,Start,End,Strand
@@ -15,47 +17,38 @@ samtools faidx targets.fa
 #CALAbarb052196t1,CALAbarb052196t1,1,1018,+
 #CALAbarb052018t1,CALAbarb052018t1,1,469,+
 
-###############################################
-################ FeatureCounts ################
-###############################################
+sed -i 's/,/\t/g' targets.SAF ## Change from comma to tab-delimited after editing file. 
 
-# Count Reads
-# Merged
-sed -i 's/,/\t/g' targets.SAF ##change from comma to tab-delimited 
+## Run featurecounts to quantify transcript reads using the *BestMapped.bam files produced by Bowtie2.
 
 $HOME/tools/subread-2.0.3/bin/featureCounts -T 40 -B -C -d 100 -P -p --countReadPairs -F SAF -a targets.SAF -o read_counts *BestMapped.bam
-##Remove -M if you are not using MultiMapped. Alternatively, add -M if using MultiMapped.bam files - in this case, we are just using BestMapped.bam files
 
-##Percentage of successfully assigned alignments between 0.0% - 1.1%.
+## For DE using target accessions only, it is necessary to manually add cluster assignment before reading in 'read counts' file in R. 
 
-##Add manual cluster annotation before reading in read counts file. 
+#################################
+########## DE Analysis ##########
+#################################
 
-#######################################
-########## DE Analysis - LAB ##########
-#######################################
-
-##Run the code below to get into the new version of R. Need to run from 'HOME' - i.e., cd ../ out of all folders. 
 R-4.3.1/bin/R
 
-setwd("/home/darren/Emma_Honours/ancestral_de/targets_only/")
+setwd("/home/darren/Emma_Honours/ancestral_de/targets_only/") ## Set working directory (example shown). 
 
-mydata <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1)
+mydata <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1) ## Read in read counts data (edited to included cluster assignment). 
 
-##For carrying out aggregate by longest cluster. 
-matrix <- mydata[,-c(1,2,3,4,5,6,7,11,12,13,14,15,16,21,22,23,24,25,26,30,31,32,36,37,41,42,43,44,48,49,53,54,55)] #select only the columns of interest, in this case, only LAB
+matrix <- mydata[,-c(1,2,3,4,5,6,7,11,12,13,14,15,16,21,22,23,24,25,26,30,31,32,36,37,41,42,43,44,48,49,53,54,55)] ## Select only the columns of interest for a specific contrast (here I have selected only labellum samples).
 
-test <- aggregate(. ~ Cluster, matrix, FUN=sum) ##Aggregate single, best mapped counts to cluster level
-row.names(test) <- test$Cluster ##Assign cluster column as rownames now
-matrix2 <- test[,-c(1)] ##Remove cluster column and assign to new df
+test <- aggregate(. ~ Cluster, matrix, FUN=sum) ## Aggregate single, best mapped counts to cluster level
+row.names(test) <- test$Cluster ## Assign cluster column as rownames now
+matrix2 <- test[,-c(1)] ## Remove cluster column and assign to new df
 write.table(matrix2, file = "aggregate_sum_cluster.txt", sep="\t", row.names=FALSE)
 
-##For carrying out aggregate by longest cluster. 
-long <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1)
-new <- select(long, c(5,63)) ##change selected columns based on size/layout of dataframe - want to select length and cluster column
+long <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1) ## Aggregate by longest cluster. 
+new <- select(long, c(5,63)) ## Change selected columns based on size/layout of dataframe - select only the length and cluster columns. 
 
 clus_max <- aggregate(Length~Cluster,new,function(x) x[which.max(abs(x))])
 
-#Combine the two dataframes
+## Combine the two dataframes
 test$Length <- clus_max[match(test$Cluster, clus_max$Cluster),"Length"]
 write.table(test, file = "longest_cluster_length.txt", sep="\t", row.names=FALSE)
-##Check here to make sure that the longest cluster length is actually correct (compare to the longest length from read counts combined with cluster table).
+
+## Check here to make sure that the longest cluster length is actually correct (compare to the longest length from read counts combined with cluster table).
