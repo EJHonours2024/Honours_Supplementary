@@ -60,3 +60,43 @@ write.table(test, file = "longest_cluster_length.txt", sep="\t", row.names=FALSE
 ## Total mapped fragments is calculated from "read_counts.summary" file produced from featurecounts - sum of "Assigned" and "Unassigned Upmapped" values for each sample. 
 ## Exon length information is located in the final column of hte "longest_cluster_length.txt" file. 
 ## Using these values, manually calculate FPKM following the above formula in an application such as LibreOffice or Excel. 
+
+## Now, using RStudio:
+
+## Load packages
+library(readxl)
+library(ggplot2)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(gridExtra)
+library(janitor)
+library(patchwork)
+library(stringr)
+library(ggpubr)
+
+## Read in manually calculated FPKM values. 
+
+input <- read_excel("fpkm.xlsx", sheet = "example")
+head(input)
+
+## Change from wide to long data organisation. 
+input_long <- gather(input, key = "File", value = "Value", -Cluster)
+
+## Make a separate dataframe for each cluster to assess normality. 
+
+cluster_data <- split(input_long, input_long$Cluster)
+
+## E.G.
+
+clus12396_data <- cluster_data[['clus12396']]
+print(clus12396_data)
+
+## Assess normality visually and statistically. 
+
+ggqqplot(clus12396_data$Value)
+shapiro.test(clus12396_data$Value) ## If p < 0.05, data does not conform to a normal distribution. 
+
+
+
+
