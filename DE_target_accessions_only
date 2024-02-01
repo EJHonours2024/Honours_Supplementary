@@ -83,6 +83,10 @@ head(input)
 ## Change from wide to long data organisation. 
 input_long <- gather(input, key = "File", value = "Value", -Cluster)
 
+## Write to a file. 
+
+write_xlsx(input_long,"example/LAB_long.xlsx")
+
 ## Make a separate dataframe for each cluster to assess normality. 
 
 cluster_data <- split(input_long, input_long$Cluster)
@@ -97,6 +101,47 @@ print(clus12396_data)
 ggqqplot(clus12396_data$Value)
 shapiro.test(clus12396_data$Value) ## If p < 0.05, data does not conform to a normal distribution. 
 
+## Edit dataframe to assign pollination strategies to each sample before proceeding (i.e, "SD" for sexually deceptive species; "FD" for food deceptive species). 
+## Read in the edited dataframe and view the structure. 
 
+Wilcox_trial <- read_excel("updated.xlsx", sheet = "LAB_long")
+head(Wilcox_trial)
+
+## Split the dataframe by cluster. 
+
+Wilcox_split <- split(Wilcox_trial, Wilcox_trial$Cluster)
+
+## Confirm dataframe split. 
+
+print(Wilcox_split$clus12396)
+
+## Perform the Wilcoxon test for each cluster, specifying to evaluate differences between SD and FD sample FPKM values. 
+
+result_clus90756 <- wilcox.test(Wilcox_split$clus90756$Value ~ Wilcox_split$clus90756$Pollination)
+result_clus90756
+
+	Wilcoxon rank sum test with continuity correction
+
+data:  Wilcox_split$clus90756$Value by Wilcox_split$clus90756$Pollination
+W = 160, p-value = 0.006473
+alternative hypothesis: true location shift is not equal to 0
+
+## Visualisation of results (example below using labellum sample results)
+
+labellum_graphs <- read_excel("updated.xlsx", sheet = "LAB_long")
+
+custom_colors <- c("FD" = "darkorchid4", "SD" = "darkolivegreen4") # Assign colours to differentiate between SD and FD samples. 
+
+p <- ggplot(labellum_graphs, aes(x = Pollination, y = Value, fill = Pollination)) +
+  geom_boxplot() +
+  geom_boxplot(outlier.shape = NA, color = "black") +
+  scale_fill_manual(values = custom_colors) +  # Set custom colors for box plots
+  facet_wrap(~ Cluster, scales = "free") + # Facet by cluster (produces a separate boxplot for each cluster) 
+  labs(title = "Box Plot of FD and SD Values by Cluster w/ Wilcoxon Rank Sum Test Values - Labellum Sample",
+       x = "Pollination",
+       y = "Value",
+       fill = "Pollination")
+
+p + stat_compare_means(method = "wilcox.test") # Specify the Wilcoxon test to calculate p-values to display on each graph. 
 
 
