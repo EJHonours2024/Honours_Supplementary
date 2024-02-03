@@ -1,1 +1,23 @@
+###################################################
+##### Positive Selection Analysis w/ PosiGene #####
+###################################################
 
+## Reformat each fasta header to include sp name and accession - use okay.cds file from EviGene 'publicset' folder. 
+for f in *_.okay.cds.fa
+do
+variable=$(basename "$f" | sed 's/_SR.okay.cds.fa//g')
+echo $variable
+sed "s/>/>$variable/g" $f | sed 's/TRINITY//g'> ../$f
+done
+
+## PosiGene for Calonema branch
+perl $HOME/tools/PosiGene-0.1/PosiGene.pl -tn=80 -o=posigene_test -as=CALAbarb -rs=CALAbarb:CALAbarb_cds.fa \
+-ts=CALAbarb,CALAcreb,CALAatti,CALAacte,CALAplic,CALApect,CALAsero,CALAlong -t=iqtree/speciestreefile.newick -nhsbr=\
+CALAacte:CALAacte_cds.fa,CALAatti:CALAatti_cds.fa,CALAbarb:CALAbarb_cds.fa,CALAcair:CALAcair_cds.fa,CALAcarn:CALAcarn_cds.fa,\
+CALAcreb:CALAcreb_cds.fa,CALAdent:CALAdent_cds.fa,CALAflav:CALAflav_cds.fa,CALAlong:CALAlong_cds.fa,CALApect:CALApect_cds.fa,\
+CALAplic:CALAplic_cds.fa,CALAradi:CALAradi_cds.fa,CALAsero:CALAsero_cds.fa,CALAvari:CALAvari_cds.fa,CALEmajo:CALEmajo_cds.fa,\
+CHILaffv:CHILaffv_cds.fa,CHILsemi:CHILsemi_cds.fa,CHILtrap:CHILtrap_cds.fa,CHILturf:CHILturf_cds.fa,CHILvali:CHILvali_cds.fa,\
+CORYacti:CORYacti_cds.fa,CRYPlept:CRYPlept_cds.fa,CYANcaer:CYANcaer_cds.fa,CYANgert:CYANgert_cds.fa,CYANixio:CYANixio_cds.fa,\
+DIURorie:DIURorie_cds.fa,DRAKelas:DRAKelas_cds.fa,DRAKglyp:DRAKglyp_cds.fa,DRAKthyn:DRAKthyn_cds.fa,ELYTbrun:ELYTbrun_cds.fa,\
+ELYTemar:ELYTemar_cds.fa,GLOSmajo:GLOSmajo_cds.fa,LEPOfimb:LEPOfimb_cds.fa,MICRparv:MICRparv_cds.fa,PARAnigr:PARAnigr_cds.fa,\
+PTERcurt:PTERcurt_cds.fa,RHIZslat:RHIZslat_cds.fa,RIMAelli:RIMAelli_cds.fa,THELangu:THELangu_cds.fa
