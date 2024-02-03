@@ -39,3 +39,22 @@ $HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -S "IQTREE_ortho_MSA" --prefix loci -
 
 $HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -t species_tree.treefile --gcf loci.treefile -p "IQTREE_ortho_MSA" --scf 100 --prefix concord -T 10
 
+## Visual assessment of the relationship between bootstrap values and gCF and sCF values (in R). 
+
+df <- read_excel("gcf_scf_input.xlsx")
+print(df)
+
+names(df)[18] = "bootstrap" ## Annotate columns as "bootstrap" and "branchlength" - column numbers will change based on dataframe size. 
+names(df)[19] = "branchlength"
+
+head(df)
+
+ggplot(d, aes(x = gCF, y = sCF)) + 
+    geom_point(aes(colour = bootstrap)) + 
+    scale_colour_viridis(direction = -1) + 
+    xlim(0, 100) +
+    ylim(0, 100) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  theme_bw() ## Producing graph 
+
+
