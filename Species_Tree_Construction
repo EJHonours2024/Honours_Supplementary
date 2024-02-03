@@ -29,9 +29,13 @@ done
 
 ## Construction of species tree w/ IQTREE
 
-$HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -p "IQTREE_ortho_MSA" -cmax 15 -msub nuclear -m MFP+Merge -alrt 1000 -B 1000 -nt AUTO --prefix "cmax15_msubnucl_MFPmerge_ortho_MSA"
+$HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -p "IQTREE_ortho_MSA" -cmax 15 -msub nuclear -m MFP+Merge -alrt 1000 -B 1000 -nt AUTO --prefix "species_tree"
 
-## Infer gene/loci trees w IQTREE
+## Infer gene/loci trees w/ IQTREE
 
 $HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -S "IQTREE_ortho_MSA" --prefix loci -T AUTO
+
+## Estimation of gCF and sCF w/ IQTREE
+
+$HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -t species_tree.treefile --gcf loci.treefile -p "IQTREE_ortho_MSA" --scf 100 --prefix concord -T 10
 
