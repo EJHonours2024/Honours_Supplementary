@@ -31,9 +31,9 @@ done
 
 $HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -p "IQTREE_ortho_MSA" -cmax 15 -msub nuclear -m MFP+Merge -alrt 1000 -B 1000 -nt AUTO --prefix "species_tree"
 
-## Infer gene/loci trees w/ IQTREE
+## Infer gene/loci trees w/ IQTREE (include bootstrap command)
 
-$HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -S "IQTREE_ortho_MSA" --prefix loci -T AUTO
+$HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -S "IQTREE_ortho_MSA" -B 1000 --prefix loci_boot -T AUTO
 
 ## Estimation of gCF and sCF w/ IQTREE
 
@@ -57,4 +57,32 @@ ggplot(d, aes(x = gCF, y = sCF)) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
   theme_bw() ## Producing graph 
 
+## ASTRAL coalescent tree construction
 
+## Contracting branches below specified bootstrap support values using IQTREE gene/loci trees. 
+
+nw_ed loci_boot.treefile 'i & b<=75' o > loci_boot_BS75.treefile
+nw_ed loci_boot.treefile 'i & b<=50' o > loci_boot_BS50.treefile
+nw_ed loci_boot.treefile 'i & b<=33' o > loci_boot_BS33.treefile
+nw_ed loci_boot.treefile 'i & b<=30' o > loci_boot_BS30.treefile
+nw_ed loci_boot.treefile 'i & b<=25' o > loci_boot_BS25.treefile
+nw_ed loci_boot.treefile 'i & b<=20' o > loci_boot_BS20.treefile
+nw_ed loci_boot.treefile 'i & b<=15' o > loci_boot_BS15.treefile
+nw_ed loci_boot.treefile 'i & b<=10' o > loci_boot_BS10.treefile
+nw_ed loci_boot.treefile 'i & b<=5' o > loci_boot_BS5.treefile
+nw_ed loci_boot.treefile 'i & b<=0' o > loci_boot_BS0.treefile
+
+## Running ASTRAL for each contracted set of loci/gene trees. 
+
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS75.treefile -o ASTRAL_loci_boot_BS75.treefile 2>loci_boot_BS75.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS50.treefile -o ASTRAL_loci_boot_BS50.treefile 2>loci_boot_BS50.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS33.treefile -o ASTRAL_loci_boot_BS33.treefile 2>loci_boot_BS33.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS30.treefile -o ASTRAL_loci_boot_BS30.treefile 2>loci_boot_BS30.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS25.treefile -o ASTRAL_loci_boot_BS25.treefile 2>loci_boot_BS25.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS20.treefile -o ASTRAL_loci_boot_BS20.treefile 2>loci_boot_BS20.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS15.treefile -o ASTRAL_loci_boot_BS15.treefile 2>loci_boot_BS15.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS10.treefile -o ASTRAL_loci_boot_BS10.treefile 2>loci_boot_BS10.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS5.treefile -o ASTRAL_loci_boot_BS5.treefile 2>loci_boot_BS5.treefile.log
+java -jar $HOME/tools/Astral/astral.5.15.4.jar -i loci_boot_BS0.treefile -o ASTRAL_loci_boot_BS0.treefile 2>loci_boot_BS0.treefile.log
+
+## Visually assess changes to tree topology using software such as Figtree or iTOL. 
