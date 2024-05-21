@@ -2,7 +2,8 @@
 ##### OrthoFinder #####
 #######################
 
-## Run OrthoFinder to identify single copy orthologs. 
+## Run OrthoFinder to identify single copy orthologs. Input is all primary transcripts (as amino acid sequence) for each species. 
+## Below, I have directed the command to my file, 'emma_phylotrans/', where I am storing all primary transcripts for each species. 
 
 $HOME/tools/OrthoFinder_v2.5.2/orthofinder -t 72 -M msa -S diamond_ultra_sens -I 1.3 -f /home/emma_phylotrans/
 
