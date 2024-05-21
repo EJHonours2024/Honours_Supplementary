@@ -7,7 +7,7 @@ R-4.3.1/bin/R #Run R
 setwd("/home/darren/Emma_Honours/ancestral_de/de_analysis/") #Set working directory (example shown). 
 
 count <- read.table("read_counts", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1) #Read in read count data. 
-count2 <- mydata[,-c(1,2,3,4,5,6,7,14,15,16,25,26,36,37,48,49)] #Select only the columns of interest (i.e., only labellum samples). 
+count2 <- mydata[,-c(1,2,3,4,5,6,7,14,15,16,25,26,36,37,48,49)] #Select only the columns of interest depending on your contrast (i.e., only labellum samples). 
 
 cluster <- read.table("vsearch_clust_c0.75.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=2) 
 count2$cluster <- cluster[match(row.names(count2), row.names(cluster)),"cluster"] #Match Evigene accessions to VSEARCH cluster assignment. 
@@ -52,6 +52,8 @@ design <- model.matrix(~0+group, data=y$samples)
 y <- calcNormFactors(y) #TMM normalisation
 y <- estimateDisp(y,design)
 
+plotMDS(y) #For preliminary exploration of data. Always visualise prior to DE analysis.
+
 fit <- glmQLFit(y, design)
 
 my.contrasts <- makeContrasts(FDVSSD = groupFD - groupSD, levels=design) #Specify the constrast. 
@@ -65,7 +67,7 @@ DE <- read.table("edgeR_qlf_FPKM.txt", sep="\t", stringsAsFactors=FALSE, header=
 
 #Stop here and check that the dataframes are the same size, otherwise merging will not proceed correctly. 
 
-merge_df <- merge(testclus, DE, by = "cluster")
+merge_df <- merge(testclus, DE, by = "cluster") #Merge transcript annotations with DE results. 
 write.table(merge_df, file = "DE_using_FPKM.txt",sep="\t") #Check that merging is successful by comparing to original input files. 
 
 
