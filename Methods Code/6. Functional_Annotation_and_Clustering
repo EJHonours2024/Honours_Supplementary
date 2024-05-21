@@ -3,6 +3,7 @@
 ##########################################
 
 ###Merge all primary transcript files for species. 
+###To obtain BIN completeness annotation for each species, MapMan must be run for each species separately. 
 
 cat *_evg_primary.fa > CALA_merged_short.fa
 
@@ -23,8 +24,8 @@ awk -F"\t" 'NR==FNR{a[$2]=$1;next}{print $1"\t"$2"\t"$3"\t"a[$1];}' uniprot_spro
 ##### MYB Annotator #####
 #########################
 
-###MapMan is unable to extensively annotate all MYB TFs, and therefore myb_annotator.py was used. 
-###Need to activate MYB_annotator before it can be used. 
+###MapMan is unable to extensively annotate all MYB TFs therefore myb_annotator.py was additionally used. 
+###Once installed, need to activate MYB_annotator before it can be used. 
 
 conda activate mybannotator
 
@@ -61,8 +62,8 @@ $HOME/tools/iqtree-2.1.3-Linux/bin/iqtree2 -s ath_fin_alignment_input.fasta.aln 
 ##### bHLH Annotator #####
 ##########################
 
-###MapMan is unable to extensively annotate all bHLH TFs, and therefore bhlh_annotator.py was used. 
-###Need to activate bHLH_annotator before it can be used. 
+###MapMan is unable to extensively annotate all bHLH TFs therefore bhlh_annotator.py was additionally used. 
+###Once installed, need to activate bHLH_annotator before it can be used. 
 
 conda activate bhlh_annotator                                                                                                        
 
