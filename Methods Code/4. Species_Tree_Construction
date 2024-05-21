@@ -28,7 +28,9 @@ done
 
 ## Confirm that duplicates have been removed by random check of multiple files. 
 
-## Construction of species tree w/ IQTREE
+##################################################
+##### Construction of species tree w/ IQTREE #####
+##################################################
 
 $HOME/tools/iqtree-2.0.6-Linux/bin/iqtree2 -p "IQTREE_ortho_MSA" -cmax 15 -msub nuclear -m MFP+Merge -alrt 1000 -B 1000 -nt AUTO --prefix "species_tree"
 
@@ -58,7 +60,9 @@ ggplot(d, aes(x = gCF, y = sCF)) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
   theme_bw() ## Producing graph 
 
-## ASTRAL coalescent tree construction
+###############################################
+##### ASTRAL coalescent tree construction #####
+###############################################
 
 ## Contracting branches below specified bootstrap support values using IQTREE gene/loci trees. 
 
