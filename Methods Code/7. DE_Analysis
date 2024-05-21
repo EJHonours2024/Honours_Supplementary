@@ -45,7 +45,8 @@ write.table(rpkm_cluster, file = "edgeR_FPKM_cluster_.txt", sep="\t")
 matrix2 <- read.table("edgeR_FPKM_cluster_.txt", sep="\t", stringsAsFactors=FALSE,  header=TRUE, row.names=1)
 
 #Assign sample groupings - here I have used 'SD' for samples of sexually deceptive species, and 'FD' for samples of food deceptive species. 
-group <- factor(c("SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","SD","FD","FD","FD","SD","SD","SD","SD","SD","SD","SD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD","FD"))
+group <- factor(c("SD","SD","SD","SD","FD","FD","FD","SD","SD","SD","SD","FD","FD"))
+
 y <- DGEList(counts=matrix2, group=group)
 design <- model.matrix(~0+group, data=y$samples)
 
